@@ -111,6 +111,21 @@
         <p class="rule-desc">提醒该员工在本考勤周期内有尚未审批通过的加班申请，需及时处理以确保数据完整。</p>
       </div>
 
+      <div class="rule-card">
+        <div class="rule-head">
+          <span class="rule-num">7</span>
+          <span class="rule-title">加班打卡记录核验</span>
+          <span class="tag tag-warn">一般</span>
+        </div>
+        <div class="rule-formula">加班申请(日期、开始/结束时间、时长) ⊆ 考勤表打卡记录</div>
+        <p class="rule-desc">每条已通过的加班申请，其日期应有打卡记录，加班开始时间不早于上班打卡、结束时间不晚于下班打卡，且申报时长应与开始/结束时间跨度一致。</p>
+        <div class="rule-extra">
+          <span class="rule-extra-label">检查项</span> 当日有无打卡、开始时间≥上班打卡、结束时间≤下班打卡、时长=结束-开始
+          <br>
+          <span class="rule-extra-label">容差</span> 打卡时间对比容差 10 分钟
+        </div>
+      </div>
+
       <div class="rule-note">
         <strong>通用说明</strong>
         <ul>

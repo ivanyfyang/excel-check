@@ -57,24 +57,30 @@ export function render(results) {
           <div>
             <strong>${c.type}</strong>
             <div class="issue-formula">${c.formula}</div>
-            <div class="issue-detail">${c.detail}</div>
+            <div class="issue-detail">${c.detail.replace(/\n/g, '<br>')}</div>
           </div>
         </li>`
       ).join('')}</ul>`;
 
+    const fmtTimeRange = r => {
+      if (!r.startTimeRaw && !r.endTimeRaw) return '-';
+      const s = r.startTimeRaw.replace(/^\d{4}\/\d{1,2}\/\d{1,2}\s*/, '');
+      const e = r.endTimeRaw.replace(/^\d{4}\/\d{1,2}\/\d{1,2}\s*/, '');
+      return `${s}-${e}${r.crossMidnight ? '(次日)' : ''}`;
+    };
     const otApprovedRows = emp.otApproved.map(r =>
-      `<tr><td>${fmtDate(r.date)}</td><td>${r.dayType}</td><td>${r.hours}h</td><td class="ot-status-pass">${r.status}</td></tr>`
+      `<tr><td>${fmtDate(r.date)}</td><td>${r.dayType}</td><td>${fmtTimeRange(r)}</td><td>${r.hours}h</td><td class="ot-status-pass">${r.status}</td></tr>`
     ).join('');
     const otPendingRows = emp.otPending.map(r =>
-      `<tr><td>${fmtDate(r.date)}</td><td>${r.dayType}</td><td>${r.hours}h</td><td class="ot-status-pending">${r.status}</td></tr>`
+      `<tr><td>${fmtDate(r.date)}</td><td>${r.dayType}</td><td>${fmtTimeRange(r)}</td><td>${r.hours}h</td><td class="ot-status-pending">${r.status}</td></tr>`
     ).join('');
     const otRejectedRows = emp.otRejected.map(r =>
-      `<tr><td>${fmtDate(r.date)}</td><td>${r.dayType}</td><td>${r.hours}h</td><td class="ot-status-reject">${r.status}</td></tr>`
+      `<tr><td>${fmtDate(r.date)}</td><td>${r.dayType}</td><td>${fmtTimeRange(r)}</td><td>${r.hours}h</td><td class="ot-status-reject">${r.status}</td></tr>`
     ).join('');
     const allOTRows = otApprovedRows + otPendingRows + otRejectedRows;
     const otDetailHtml = allOTRows
       ? `<details class="ot-detail"><summary>查看加班申请明细 (${emp.otApproved.length + emp.otPending.length + emp.otRejected.length} 条)</summary>
-          <table class="ot-table"><thead><tr><th>日期</th><th>类型</th><th>时长</th><th>状态</th></tr></thead><tbody>${allOTRows}</tbody></table></details>`
+          <table class="ot-table"><thead><tr><th>日期</th><th>类型</th><th>时段</th><th>时长</th><th>状态</th></tr></thead><tbody>${allOTRows}</tbody></table></details>`
       : '<p style="font-size:12px;color:var(--text2);margin-top:8px;">无本期加班申请记录</p>';
 
     return `

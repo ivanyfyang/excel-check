@@ -10,7 +10,7 @@ export function readFile(file) {
 }
 
 export function readWorkbook(buf) {
-  return XLSX.read(buf, { type: 'array', cellDates: true });
+  return XLSX.read(buf, { type: 'array' });
 }
 
 export function parseDateRange(sheetName) {
@@ -32,9 +32,21 @@ function numVal(v) {
   return isNaN(n) ? 0 : n;
 }
 
+function timeFracToMinutes(v) {
+  if (v == null || typeof v !== 'number') return null;
+  return Math.round(v * 24 * 60);
+}
+
 export function parseAttendance(wb, sheetName) {
   const ws = wb.Sheets[sheetName];
   const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: true });
+
+  const dateRow = data[2];
+  const dateHeaders = [];
+  for (let c = 3; c <= 33; c++) {
+    const v = dateRow ? dateRow[c] : null;
+    dateHeaders.push(typeof v === 'number' ? excelDateToJS(v) : null);
+  }
 
   const employees = [];
   let lastStore = '';
@@ -42,6 +54,8 @@ export function parseAttendance(wb, sheetName) {
 
   while (i + 3 < data.length) {
     const row0 = data[i];
+    const row1 = data[i + 1];
+    const row2 = data[i + 2];
     const row3 = data[i + 3];
 
     if (!row0 || row0[1] == null || String(row0[1]).trim() === '') {
@@ -55,9 +69,12 @@ export function parseAttendance(wb, sheetName) {
     }
 
     const dailyHours = [];
+    const clockIn = [];
+    const clockOut = [];
     for (let c = 3; c <= 33; c++) {
-      const v = row3 ? numVal(row3[c]) : 0;
-      dailyHours.push(Math.round(v * 100) / 100);
+      dailyHours.push(Math.round((row3 ? numVal(row3[c]) : 0) * 100) / 100);
+      clockIn.push(row1 ? timeFracToMinutes(row1[c]) : null);
+      clockOut.push(row2 ? timeFracToMinutes(row2[c]) : null);
     }
 
     const shifts = [];
@@ -71,6 +88,9 @@ export function parseAttendance(wb, sheetName) {
       name,
       shifts,
       dailyHours,
+      clockIn,
+      clockOut,
+      dateHeaders,
       sumDaily: Math.round(dailyHours.reduce((a, b) => a + b, 0) * 100) / 100,
       shouldHours: numVal(row0[34]),
       actualHours: numVal(row0[35]),
@@ -101,6 +121,19 @@ function excelDateToJS(serial) {
   return new Date(utcDays * 86400 * 1000);
 }
 
+function parseDateTimeStr(s) {
+  if (s == null) return null;
+  const str = String(s).trim();
+  const m = str.match(/(\d{4})\/(\d{1,2})\/(\d{1,2})\s+(\d{1,2}):(\d{2})/);
+  if (m) return { date: new Date(+m[1], +m[2] - 1, +m[3]), minutes: +m[4] * 60 + +m[5] };
+  if (typeof s === 'number') {
+    const dayPart = Math.floor(s);
+    const timePart = s - dayPart;
+    return { date: excelDateToJS(dayPart), minutes: Math.round(timePart * 24 * 60) };
+  }
+  return null;
+}
+
 export function parseOvertime(wb) {
   const sheetName = wb.SheetNames[0];
   const ws = wb.Sheets[sheetName];
@@ -127,11 +160,23 @@ export function parseOvertime(wb) {
       }
     }
 
+    const startParsed = parseDateTimeStr(r['开始时间']);
+    const endParsed = parseDateTimeStr(r['结束时间']);
+    let crossMidnight = false;
+    if (startParsed && endParsed && startParsed.date && endParsed.date) {
+      crossMidnight = endParsed.date.getTime() > startParsed.date.getTime();
+    }
+
     return {
       name: r['申请人'] ? String(r['申请人']).trim() : '',
       date,
       dayType: r['工作日类型'] ? String(r['工作日类型']).trim() : '',
       hours,
+      startMinutes: startParsed ? startParsed.minutes : null,
+      endMinutes: endParsed ? endParsed.minutes : null,
+      crossMidnight,
+      startTimeRaw: r['开始时间'] != null ? String(r['开始时间']).trim() : '',
+      endTimeRaw: r['结束时间'] != null ? String(r['结束时间']).trim() : '',
       status: r['当前审批状态'] ? String(r['当前审批状态']).trim() : '',
     };
   });

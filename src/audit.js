@@ -104,6 +104,70 @@ export function audit(employees, otRecords, dateRange) {
       });
     }
 
+    // 规则 7: 加班打卡记录核验
+    if (approved.length > 0 && emp.dateHeaders) {
+      const mismatchDetails = [];
+      for (const ot of approved) {
+        if (!ot.date) continue;
+        const otDay = ot.date.getDate();
+        const otMonth = ot.date.getMonth();
+        const otYear = ot.date.getFullYear();
+        let dayIdx = -1;
+        for (let d = 0; d < emp.dateHeaders.length; d++) {
+          const dh = emp.dateHeaders[d];
+          if (dh && dh.getFullYear() === otYear && dh.getMonth() === otMonth && dh.getDate() === otDay) {
+            dayIdx = d;
+            break;
+          }
+        }
+        if (dayIdx === -1) continue;
+
+        const ciMin = emp.clockIn[dayIdx];
+        const coMin = emp.clockOut[dayIdx];
+        const fmtMin = m => {
+          if (m == null) return '-';
+          const h = Math.floor(m / 60);
+          const mm = m % 60;
+          return `${h}:${String(mm).padStart(2, '0')}`;
+        };
+        const dateStr = `${otMonth + 1}/${otDay}`;
+
+        if (ciMin == null || coMin == null) {
+          mismatchDetails.push(`${dateStr}: 申请${ot.hours}h，但当日无打卡记录`);
+          continue;
+        }
+
+        const problems = [];
+        if (ot.startMinutes != null && ot.startMinutes < ciMin - 10) {
+          problems.push(`开始${fmtMin(ot.startMinutes)}早于打卡${fmtMin(ciMin)}`);
+        }
+        if (ot.endMinutes != null && !ot.crossMidnight && ot.endMinutes > coMin + 10) {
+          problems.push(`结束${fmtMin(ot.endMinutes)}晚于打卡${fmtMin(coMin)}`);
+        }
+        if (ot.startMinutes != null && ot.endMinutes != null) {
+          const spanMinutes = ot.crossMidnight
+            ? (1440 - ot.startMinutes) + ot.endMinutes
+            : ot.endMinutes - ot.startMinutes;
+          const spanHours = spanMinutes / 60;
+          if (Math.abs(spanHours - ot.hours) > 0.1) {
+            problems.push(`时长${ot.hours}h≠时间跨度${spanHours.toFixed(1)}h`);
+          }
+        }
+        if (problems.length > 0) {
+          const endLabel = ot.crossMidnight ? `次日${fmtMin(ot.endMinutes)}` : fmtMin(ot.endMinutes);
+          mismatchDetails.push(`${dateStr}: 打卡${fmtMin(ciMin)}-${fmtMin(coMin)}，加班${fmtMin(ot.startMinutes)}-${endLabel} ${ot.hours}h → ${problems.join('；')}`);
+        }
+      }
+      const r7Pass = mismatchDetails.length === 0;
+      checks.push({
+        type: '加班打卡记录核验',
+        passed: r7Pass,
+        severity: r7Pass ? 'ok' : 'medium',
+        formula: `已通过 ${approved.length} 条加班申请 vs 考勤打卡记录`,
+        detail: r7Pass ? '所有加班申请的时间均在打卡范围内' : mismatchDetails.join('\n'),
+      });
+    }
+
     const issues = checks.filter(c => !c.passed);
 
     results.push({
