@@ -173,7 +173,7 @@ export function audit(employees, otRecords, dateRange) {
       checks.push({
         type: '加班打卡记录核验',
         passed: r7Pass,
-        severity: r7Pass ? 'ok' : 'medium',
+        severity: r7Pass ? 'ok' : 'high',
         formula: `已通过+审批中 ${effective.length} 条加班申请 vs 考勤打卡记录`,
         detail: r7Pass ? '所有加班申请的时间均在打卡范围内' : mismatchDetails.join('\n'),
       });
