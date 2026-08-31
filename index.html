@@ -30,6 +30,86 @@
     <button class="btn" id="auditBtn">开始审核</button>
   </div>
 
+  <details class="rules-panel" id="rulesPanel">
+    <summary class="rules-toggle">检测规则说明</summary>
+    <div class="rules-body">
+      <div class="rule-card">
+        <div class="rule-head">
+          <span class="rule-num">1</span>
+          <span class="rule-title">等式平衡检查</span>
+          <span class="tag tag-error">严重</span>
+        </div>
+        <div class="rule-formula">实际出勤 - 应出勤 = (节假日加班 + 工作日加班) - 总假期</div>
+        <p class="rule-desc">多出的工时应等于加班扣除请假后的净值。如果不等，说明工时记录存在矛盾，可能是出勤、加班或假期数据填写有误。</p>
+      </div>
+
+      <div class="rule-card">
+        <div class="rule-head">
+          <span class="rule-num">2</span>
+          <span class="rule-title">加班总时长一致性</span>
+          <span class="tag tag-error">严重</span>
+          <span class="tag tag-warn">一般</span>
+        </div>
+        <div class="rule-formula">考勤表(节假日加班 + 工作日加班) = 加班申请单(已通过合计)</div>
+        <p class="rule-desc">考勤表中的加班工时合计应与加班申请单中已通过的时长之和一致。仅统计加班日期在当前考勤周期内且状态为"已通过"的申请。考勤表有加班但无任何已通过申请时标记为严重。</p>
+      </div>
+
+      <div class="rule-card">
+        <div class="rule-head">
+          <span class="rule-num">3</span>
+          <span class="rule-title">工作日加班分类一致性</span>
+          <span class="tag tag-warn">一般</span>
+        </div>
+        <div class="rule-formula">考勤表(工作日加班) = 加班申请单(工作日类型=普通工作日, 已通过)</div>
+        <p class="rule-desc">考勤表中的工作日加班工时应与申请单中"普通工作日"类型且已通过的加班时长一致。不一致时可能存在加班分类归属错误。</p>
+      </div>
+
+      <div class="rule-card">
+        <div class="rule-head">
+          <span class="rule-num">4</span>
+          <span class="rule-title">节假日加班分类一致性</span>
+          <span class="tag tag-warn">一般</span>
+        </div>
+        <div class="rule-formula">考勤表(节假日加班) = 加班申请单(周末 + 法定节假日, 已通过)</div>
+        <p class="rule-desc">考勤表中的节假日加班工时应与申请单中"周末"和"法定节假日"类型且已通过的加班时长之和一致。分类错误会影响加班费计算。</p>
+      </div>
+
+      <div class="rule-card">
+        <div class="rule-head">
+          <span class="rule-num">5</span>
+          <span class="rule-title">带薪假期工时异常</span>
+          <span class="tag tag-error">严重</span>
+        </div>
+        <div class="rule-formula">实际出勤 + 带薪假期 = 应出勤 + 加班</div>
+        <p class="rule-desc">带薪假期（年假、婚假、产假、育儿假、丧假、其他）当天不应同时计入实际出勤工时。如果等式左侧大于右侧，说明带薪假期当天的工时被重复计入。扣薪假期（事假、病假）不纳入此项检查。</p>
+        <div class="rule-extra">
+          <span class="rule-extra-label">带薪假期</span> 年假、婚假、产假、育儿假、丧假、其他
+          <br>
+          <span class="rule-extra-label">扣薪假期</span> 事假、病假
+        </div>
+      </div>
+
+      <div class="rule-card">
+        <div class="rule-head">
+          <span class="rule-num">6</span>
+          <span class="rule-title">未审批加班提醒</span>
+          <span class="tag tag-warn">一般</span>
+        </div>
+        <div class="rule-formula">存在状态为"审批中"的加班申请记录</div>
+        <p class="rule-desc">提醒该员工在本考勤周期内有尚未审批通过的加班申请，需及时处理以确保数据完整。</p>
+      </div>
+
+      <div class="rule-note">
+        <strong>通用说明</strong>
+        <ul>
+          <li>所有数值对比的容差为 0.1 小时</li>
+          <li>加班申请单中"已驳回""已撤销""通过后撤销"的记录仅展示，不参与计算</li>
+          <li>考勤周期从 Sheet 名（格式 YYYYMMDD-YYYYMMDD）自动解析，超出范围的加班记录不参与本期审核</li>
+        </ul>
+      </div>
+    </div>
+  </details>
+
   <div id="error-msg"></div>
 
   <div class="results" id="results">
