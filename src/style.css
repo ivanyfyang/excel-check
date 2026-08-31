@@ -156,6 +156,7 @@ h1 { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
 }
 .issue-item.high { background: var(--red-bg); }
 .issue-item.medium { background: var(--orange-bg); }
+.issue-item.ok { background: var(--green-bg); }
 .issue-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
 .issue-formula {
   font-family: "SF Mono", "Cascadia Code", "Fira Code", monospace;

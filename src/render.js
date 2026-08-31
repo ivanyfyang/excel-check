@@ -50,18 +50,17 @@ export function render(results) {
       emp.other > 0 ? `其他 ${emp.other}h` : '',
     ].filter(Boolean).join('、') || '无';
 
-    const issueHtml = emp.issues.length === 0
-      ? '<p style="color:var(--green);font-size:13px;padding-top:12px;">所有检查项均通过</p>'
-      : `<ul class="issue-list">${emp.issues.map(iss =>
-          `<li class="issue-item ${iss.severity}">
-            <span class="issue-icon">${iss.severity === 'high' ? '\u{1F534}' : '\u{1F7E1}'}</span>
-            <div>
-              <strong>${iss.type}</strong>
-              <div class="issue-formula">${iss.formula}</div>
-              <div class="issue-detail">${iss.detail}</div>
-            </div>
-          </li>`
-        ).join('')}</ul>`;
+    const icon = c => c.passed ? '\u{2705}' : (c.severity === 'high' ? '\u{1F534}' : '\u{1F7E1}');
+    const checksHtml = `<ul class="issue-list">${emp.checks.map(c =>
+        `<li class="issue-item ${c.passed ? 'ok' : c.severity}">
+          <span class="issue-icon">${icon(c)}</span>
+          <div>
+            <strong>${c.type}</strong>
+            <div class="issue-formula">${c.formula}</div>
+            <div class="issue-detail">${c.detail}</div>
+          </div>
+        </li>`
+      ).join('')}</ul>`;
 
     const otApprovedRows = emp.otApproved.map(r =>
       `<tr><td>${fmtDate(r.date)}</td><td>${r.dayType}</td><td>${r.hours}h</td><td class="ot-status-pass">${r.status}</td></tr>`
@@ -95,7 +94,7 @@ export function render(results) {
           <div class="data-item"><span class="dl">假期明细</span> <span class="dv">${leaveItems}</span></div>
           <div class="data-item"><span class="dl">申请单已通过</span> <span class="dv">${emp.approvedTotal.toFixed(1)}h</span></div>
         </div>
-        ${issueHtml}
+        ${checksHtml}
         ${otDetailHtml}
       </div>
     </div>`;
