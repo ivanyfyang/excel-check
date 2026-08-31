@@ -157,6 +157,19 @@ h1 { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
 .issue-item.high { background: var(--red-bg); }
 .issue-item.medium { background: var(--orange-bg); }
 .issue-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.issue-formula {
+  font-family: "SF Mono", "Cascadia Code", "Fira Code", monospace;
+  font-size: 12px;
+  background: rgba(0, 0, 0, .04);
+  border: 1px solid rgba(0, 0, 0, .06);
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin: 4px 0;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.issue-detail { margin-top: 2px; }
 
 .ot-detail { margin-top: 12px; }
 .ot-detail summary { font-size: 13px; font-weight: 600; cursor: pointer; color: var(--accent); }

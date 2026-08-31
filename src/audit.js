@@ -27,8 +27,9 @@ export function audit(employees, otRecords, dateRange) {
       issues.push({
         type: '等式不平衡',
         severity: 'high',
-        detail: `实际出勤(${emp.actualHours}h) - 应出勤(${emp.shouldHours}h) = ${diff.toFixed(1)}h，` +
-          `但 加班(${emp.totalOT}h) - 假期(${emp.totalLeave}h) = ${balance.toFixed(1)}h，差异 ${Math.abs(diff - balance).toFixed(1)}h`,
+        formula: `实际出勤 - 应出勤 = ${emp.actualHours} - ${emp.shouldHours} = ${diff.toFixed(1)}` +
+          `  |  加班 - 假期 = ${emp.totalOT} - ${emp.totalLeave} = ${balance.toFixed(1)}`,
+        detail: `两侧应相等，实际差异 ${Math.abs(diff - balance).toFixed(1)}h，工时记录存在矛盾`,
       });
     }
 
@@ -36,7 +37,9 @@ export function audit(employees, otRecords, dateRange) {
       issues.push({
         type: '加班总时长不一致',
         severity: emp.totalOT > 0 && approvedTotal === 0 ? 'high' : 'medium',
-        detail: `考勤表加班合计 ${emp.totalOT.toFixed(1)}h，加班申请单已通过合计 ${approvedTotal.toFixed(1)}h，差异 ${(emp.totalOT - approvedTotal).toFixed(1)}h`,
+        formula: `考勤表加班 = 节假日${emp.holidayOT} + 工作日${emp.workdayOT} = ${emp.totalOT.toFixed(1)}` +
+          `  |  申请单已通过 = ${approvedTotal.toFixed(1)}`,
+        detail: `差异 ${(emp.totalOT - approvedTotal).toFixed(1)}h`,
       });
     }
 
@@ -44,7 +47,8 @@ export function audit(employees, otRecords, dateRange) {
       issues.push({
         type: '工作日加班不一致',
         severity: 'medium',
-        detail: `考勤表工作日加班 ${emp.workdayOT}h，申请单工作日加班(已通过) ${approvedWorkday.toFixed(1)}h，差异 ${(emp.workdayOT - approvedWorkday).toFixed(1)}h`,
+        formula: `考勤表工作日加班 = ${emp.workdayOT}  |  申请单(普通工作日,已通过) = ${approvedWorkday.toFixed(1)}`,
+        detail: `差异 ${(emp.workdayOT - approvedWorkday).toFixed(1)}h`,
       });
     }
 
@@ -52,27 +56,33 @@ export function audit(employees, otRecords, dateRange) {
       issues.push({
         type: '节假日加班不一致',
         severity: 'medium',
-        detail: `考勤表节假日加班 ${emp.holidayOT}h，申请单节假日+周末加班(已通过) ${(approvedHoliday + approvedWeekend).toFixed(1)}h，差异 ${(emp.holidayOT - approvedHoliday - approvedWeekend).toFixed(1)}h`,
+        formula: `考勤表节假日加班 = ${emp.holidayOT}  |  申请单(周末${approvedWeekend.toFixed(1)} + 法定${approvedHoliday.toFixed(1)}) = ${(approvedHoliday + approvedWeekend).toFixed(1)}`,
+        detail: `差异 ${(emp.holidayOT - approvedHoliday - approvedWeekend).toFixed(1)}h，分类错误会影响加班费计算`,
       });
     }
 
     // 带薪假期 + 实际出勤 vs 应出勤 对比
-    // 带薪假期：年假、婚假、产假、育儿假、丧假、其他
-    // 扣薪假期：事假、病假（不计入）
     const paidLeave = emp.annualLeave + emp.weddingLeave + emp.maternityLeave +
       emp.parentalLeave + emp.bereavementLeave + emp.other;
-    const unpaidLeave = emp.personalLeave + emp.sickLeave;
     if (paidLeave > 0) {
       const coveredHours = emp.actualHours + paidLeave;
       const expectedWithOT = emp.shouldHours + emp.totalOT;
       if (Math.abs(coveredHours - expectedWithOT) > 0.1) {
         const delta = coveredHours - expectedWithOT;
+        const leaveBreakdown = [
+          emp.annualLeave > 0 ? `年假${emp.annualLeave}` : '',
+          emp.weddingLeave > 0 ? `婚假${emp.weddingLeave}` : '',
+          emp.maternityLeave > 0 ? `产假${emp.maternityLeave}` : '',
+          emp.parentalLeave > 0 ? `育儿假${emp.parentalLeave}` : '',
+          emp.bereavementLeave > 0 ? `丧假${emp.bereavementLeave}` : '',
+          emp.other > 0 ? `其他${emp.other}` : '',
+        ].filter(Boolean).join('+');
         issues.push({
           type: '带薪假期工时异常',
           severity: 'high',
-          detail: `实际出勤(${emp.actualHours}h) + 带薪假期(${paidLeave}h) = ${coveredHours.toFixed(1)}h，` +
-            `应出勤(${emp.shouldHours}h) + 加班(${emp.totalOT}h) = ${expectedWithOT.toFixed(1)}h，` +
-            `差异 ${delta > 0 ? '+' : ''}${delta.toFixed(1)}h（带薪假期当天可能重复计入了出勤工时）`,
+          formula: `实际出勤 + 带薪假期 = ${emp.actualHours} + ${paidLeave}(${leaveBreakdown}) = ${coveredHours.toFixed(1)}` +
+            `  |  应出勤 + 加班 = ${emp.shouldHours} + ${emp.totalOT} = ${expectedWithOT.toFixed(1)}`,
+          detail: `差异 ${delta > 0 ? '+' : ''}${delta.toFixed(1)}h，带薪假期当天可能重复计入了出勤工时`,
         });
       }
     }
@@ -82,7 +92,8 @@ export function audit(employees, otRecords, dateRange) {
       issues.push({
         type: '有未审批加班申请',
         severity: 'medium',
-        detail: `${pending.length} 条加班申请仍在审批中，共 ${pendingTotal.toFixed(1)}h`,
+        formula: `审批中 ${pending.length} 条，共 ${pendingTotal.toFixed(1)}h`,
+        detail: `需及时审批以确保数据完整`,
       });
     }
 

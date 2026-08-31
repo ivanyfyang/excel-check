@@ -55,7 +55,11 @@ export function render(results) {
       : `<ul class="issue-list">${emp.issues.map(iss =>
           `<li class="issue-item ${iss.severity}">
             <span class="issue-icon">${iss.severity === 'high' ? '\u{1F534}' : '\u{1F7E1}'}</span>
-            <div><strong>${iss.type}</strong><br>${iss.detail}</div>
+            <div>
+              <strong>${iss.type}</strong>
+              <div class="issue-formula">${iss.formula}</div>
+              <div class="issue-detail">${iss.detail}</div>
+            </div>
           </li>`
         ).join('')}</ul>`;
 
