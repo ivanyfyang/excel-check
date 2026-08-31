@@ -180,6 +180,8 @@ h1 { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
 .ot-status-pass { color: var(--green); }
 .ot-status-pending { color: var(--orange); }
 .ot-status-reject { color: var(--red); }
+.ot-row-warn { background: var(--red-bg); }
+.ot-warn-tip { color: var(--tag-red); font-weight: 600; }
 
 .rules-fab {
   position: fixed;
