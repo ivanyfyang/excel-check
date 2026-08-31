@@ -56,6 +56,27 @@ export function audit(employees, otRecords, dateRange) {
       });
     }
 
+    // 带薪假期 + 实际出勤 vs 应出勤 对比
+    // 带薪假期：年假、婚假、产假、育儿假、丧假、其他
+    // 扣薪假期：事假、病假（不计入）
+    const paidLeave = emp.annualLeave + emp.weddingLeave + emp.maternityLeave +
+      emp.parentalLeave + emp.bereavementLeave + emp.other;
+    const unpaidLeave = emp.personalLeave + emp.sickLeave;
+    if (paidLeave > 0) {
+      const coveredHours = emp.actualHours + paidLeave;
+      const expectedWithOT = emp.shouldHours + emp.totalOT;
+      if (Math.abs(coveredHours - expectedWithOT) > 0.1) {
+        const delta = coveredHours - expectedWithOT;
+        issues.push({
+          type: '带薪假期工时异常',
+          severity: 'high',
+          detail: `实际出勤(${emp.actualHours}h) + 带薪假期(${paidLeave}h) = ${coveredHours.toFixed(1)}h，` +
+            `应出勤(${emp.shouldHours}h) + 加班(${emp.totalOT}h) = ${expectedWithOT.toFixed(1)}h，` +
+            `差异 ${delta > 0 ? '+' : ''}${delta.toFixed(1)}h（带薪假期当天可能重复计入了出勤工时）`,
+        });
+      }
+    }
+
     if (pending.length > 0) {
       const pendingTotal = pending.reduce((s, r) => s + r.hours, 0);
       issues.push({

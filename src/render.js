@@ -86,7 +86,8 @@ export function render(results) {
           <div class="data-item"><span class="dl">实际出勤</span> <span class="dv">${emp.actualHours}h</span></div>
           <div class="data-item"><span class="dl">工作日加班</span> <span class="dv">${emp.workdayOT}h</span></div>
           <div class="data-item"><span class="dl">节假日加班</span> <span class="dv">${emp.holidayOT}h</span></div>
-          <div class="data-item"><span class="dl">假期合计</span> <span class="dv">${emp.totalLeave}h</span></div>
+          <div class="data-item"><span class="dl">带薪假期</span> <span class="dv">${(emp.annualLeave + emp.weddingLeave + emp.maternityLeave + emp.parentalLeave + emp.bereavementLeave + emp.other)}h</span></div>
+          <div class="data-item"><span class="dl">扣薪假期</span> <span class="dv">${(emp.personalLeave + emp.sickLeave)}h</span></div>
           <div class="data-item"><span class="dl">假期明细</span> <span class="dv">${leaveItems}</span></div>
           <div class="data-item"><span class="dl">申请单已通过</span> <span class="dv">${emp.approvedTotal.toFixed(1)}h</span></div>
         </div>
