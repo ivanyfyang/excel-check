@@ -62,8 +62,8 @@
           <span class="tag tag-error">严重</span>
           <span class="tag tag-warn">一般</span>
         </div>
-        <div class="rule-formula">考勤表(节假日加班 + 工作日加班) = 加班申请单(已通过合计)</div>
-        <p class="rule-desc">考勤表中的加班工时合计应与加班申请单中已通过的时长之和一致。仅统计加班日期在当前考勤周期内且状态为"已通过"的申请。考勤表有加班但无任何已通过申请时标记为严重。</p>
+        <div class="rule-formula">考勤表(节假日加班 + 工作日加班) = 加班申请单(已通过 + 审批中)</div>
+        <p class="rule-desc">考勤表中的加班工时合计应与加班申请单中已通过及审批中的时长之和一致。仅统计加班日期在当前考勤周期内的申请。考勤表有加班但无任何有效申请时标记为严重。</p>
       </div>
 
       <div class="rule-card">
@@ -72,8 +72,8 @@
           <span class="rule-title">工作日加班分类一致性</span>
           <span class="tag tag-warn">一般</span>
         </div>
-        <div class="rule-formula">考勤表(工作日加班) = 加班申请单(工作日类型=普通工作日, 已通过)</div>
-        <p class="rule-desc">考勤表中的工作日加班工时应与申请单中"普通工作日"类型且已通过的加班时长一致。不一致时可能存在加班分类归属错误。</p>
+        <div class="rule-formula">考勤表(工作日加班) = 加班申请单(普通工作日, 已通过+审批中)</div>
+        <p class="rule-desc">考勤表中的工作日加班工时应与申请单中"普通工作日"类型且已通过或审批中的加班时长一致。不一致时可能存在加班分类归属错误。</p>
       </div>
 
       <div class="rule-card">
@@ -82,8 +82,8 @@
           <span class="rule-title">节假日加班分类一致性</span>
           <span class="tag tag-warn">一般</span>
         </div>
-        <div class="rule-formula">考勤表(节假日加班) = 加班申请单(周末 + 法定节假日, 已通过)</div>
-        <p class="rule-desc">考勤表中的节假日加班工时应与申请单中"周末"和"法定节假日"类型且已通过的加班时长之和一致。分类错误会影响加班费计算。</p>
+        <div class="rule-formula">考勤表(节假日加班) = 加班申请单(周末 + 法定节假日, 已通过+审批中)</div>
+        <p class="rule-desc">考勤表中的节假日加班工时应与申请单中"周末"和"法定节假日"类型且已通过或审批中的加班时长之和一致。分类错误会影响加班费计算。</p>
       </div>
 
       <div class="rule-card">

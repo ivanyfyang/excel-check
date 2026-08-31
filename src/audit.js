@@ -16,10 +16,13 @@ export function audit(employees, otRecords, dateRange) {
     const pending = myOT.filter(r => r.status === '审批中');
     const rejected = myOT.filter(r => ['已驳回', '已撤销', '通过后撤销'].includes(r.status));
 
+    const effective = [...approved, ...pending];
     const approvedTotal = approved.reduce((s, r) => s + r.hours, 0);
-    const approvedWorkday = approved.filter(r => r.dayType === '普通工作日').reduce((s, r) => s + r.hours, 0);
-    const approvedWeekend = approved.filter(r => r.dayType === '周末').reduce((s, r) => s + r.hours, 0);
-    const approvedHoliday = approved.filter(r => r.dayType === '法定节假日').reduce((s, r) => s + r.hours, 0);
+    const pendingTotal = pending.reduce((s, r) => s + r.hours, 0);
+    const effectiveTotal = approvedTotal + pendingTotal;
+    const effectiveWorkday = effective.filter(r => r.dayType === '普通工作日').reduce((s, r) => s + r.hours, 0);
+    const effectiveWeekend = effective.filter(r => r.dayType === '周末').reduce((s, r) => s + r.hours, 0);
+    const effectiveHoliday = effective.filter(r => r.dayType === '法定节假日').reduce((s, r) => s + r.hours, 0);
 
     // 规则 1: 等式平衡检查
     const diff = emp.actualHours - emp.shouldHours;
@@ -35,34 +38,35 @@ export function audit(employees, otRecords, dateRange) {
     });
 
     // 规则 2: 加班总时长一致性
-    const r2Pass = Math.abs(emp.totalOT - approvedTotal) <= 0.1;
+    const pendingNote = pendingTotal > 0 ? `(含审批中${pendingTotal.toFixed(1)})` : '';
+    const r2Pass = Math.abs(emp.totalOT - effectiveTotal) <= 0.1;
     checks.push({
       type: '加班总时长一致性',
       passed: r2Pass,
-      severity: r2Pass ? 'ok' : (emp.totalOT > 0 && approvedTotal === 0 ? 'high' : 'medium'),
+      severity: r2Pass ? 'ok' : (emp.totalOT > 0 && effectiveTotal === 0 ? 'high' : 'medium'),
       formula: `考勤表加班 = 节假日${emp.holidayOT} + 工作日${emp.workdayOT} = ${emp.totalOT.toFixed(1)}` +
-        `  |  申请单已通过 = ${approvedTotal.toFixed(1)}`,
-      detail: r2Pass ? '考勤表与申请单加班工时一致' : `差异 ${(emp.totalOT - approvedTotal).toFixed(1)}h`,
+        `  |  申请单(已通过+审批中) = ${effectiveTotal.toFixed(1)}${pendingNote}`,
+      detail: r2Pass ? '考勤表与申请单加班工时一致' : `差异 ${(emp.totalOT - effectiveTotal).toFixed(1)}h`,
     });
 
     // 规则 3: 工作日加班分类一致性
-    const r3Pass = Math.abs(emp.workdayOT - approvedWorkday) <= 0.1;
+    const r3Pass = Math.abs(emp.workdayOT - effectiveWorkday) <= 0.1;
     checks.push({
       type: '工作日加班分类一致性',
       passed: r3Pass,
       severity: r3Pass ? 'ok' : 'medium',
-      formula: `考勤表工作日加班 = ${emp.workdayOT}  |  申请单(普通工作日,已通过) = ${approvedWorkday.toFixed(1)}`,
-      detail: r3Pass ? '工作日加班分类一致' : `差异 ${(emp.workdayOT - approvedWorkday).toFixed(1)}h`,
+      formula: `考勤表工作日加班 = ${emp.workdayOT}  |  申请单(普通工作日,已通过+审批中) = ${effectiveWorkday.toFixed(1)}`,
+      detail: r3Pass ? '工作日加班分类一致' : `差异 ${(emp.workdayOT - effectiveWorkday).toFixed(1)}h`,
     });
 
     // 规则 4: 节假日加班分类一致性
-    const r4Pass = Math.abs(emp.holidayOT - (approvedHoliday + approvedWeekend)) <= 0.1;
+    const r4Pass = Math.abs(emp.holidayOT - (effectiveHoliday + effectiveWeekend)) <= 0.1;
     checks.push({
       type: '节假日加班分类一致性',
       passed: r4Pass,
       severity: r4Pass ? 'ok' : 'medium',
-      formula: `考勤表节假日加班 = ${emp.holidayOT}  |  申请单(周末${approvedWeekend.toFixed(1)} + 法定${approvedHoliday.toFixed(1)}) = ${(approvedHoliday + approvedWeekend).toFixed(1)}`,
-      detail: r4Pass ? '节假日加班分类一致' : `差异 ${(emp.holidayOT - approvedHoliday - approvedWeekend).toFixed(1)}h，分类错误会影响加班费计算`,
+      formula: `考勤表节假日加班 = ${emp.holidayOT}  |  申请单(周末${effectiveWeekend.toFixed(1)} + 法定${effectiveHoliday.toFixed(1)},已通过+审批中) = ${(effectiveHoliday + effectiveWeekend).toFixed(1)}`,
+      detail: r4Pass ? '节假日加班分类一致' : `差异 ${(emp.holidayOT - effectiveHoliday - effectiveWeekend).toFixed(1)}h，分类错误会影响加班费计算`,
     });
 
     // 规则 5: 带薪假期工时异常
@@ -92,22 +96,20 @@ export function audit(employees, otRecords, dateRange) {
     }
 
     // 规则 6: 未审批加班提醒
-    const r6Pass = pending.length === 0;
-    if (!r6Pass) {
-      const pendingTotal = pending.reduce((s, r) => s + r.hours, 0);
+    if (pending.length > 0) {
       checks.push({
         type: '未审批加班提醒',
         passed: false,
         severity: 'medium',
-        formula: `审批中 ${pending.length} 条，共 ${pendingTotal.toFixed(1)}h`,
+        formula: `审批中 ${pending.length} 条，共 ${pendingTotal.toFixed(1)}h（已计入工时对比）`,
         detail: '需及时审批以确保数据完整',
       });
     }
 
     // 规则 7: 加班打卡记录核验
-    if (approved.length > 0 && emp.dateHeaders) {
+    if (effective.length > 0 && emp.dateHeaders) {
       const mismatchDetails = [];
-      for (const ot of approved) {
+      for (const ot of effective) {
         if (!ot.date) continue;
         const otDay = ot.date.getDate();
         const otMonth = ot.date.getMonth();
@@ -163,7 +165,7 @@ export function audit(employees, otRecords, dateRange) {
         type: '加班打卡记录核验',
         passed: r7Pass,
         severity: r7Pass ? 'ok' : 'medium',
-        formula: `已通过 ${approved.length} 条加班申请 vs 考勤打卡记录`,
+        formula: `已通过+审批中 ${effective.length} 条加班申请 vs 考勤打卡记录`,
         detail: r7Pass ? '所有加班申请的时间均在打卡范围内' : mismatchDetails.join('\n'),
       });
     }
@@ -178,9 +180,7 @@ export function audit(employees, otRecords, dateRange) {
       otPending: pending,
       otRejected: rejected,
       approvedTotal,
-      approvedWorkday,
-      approvedWeekend,
-      approvedHoliday,
+      effectiveTotal,
     });
   }
 

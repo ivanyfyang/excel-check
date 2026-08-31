@@ -98,7 +98,7 @@ export function render(results) {
           <div class="data-item"><span class="dl">带薪假期</span> <span class="dv">${(emp.annualLeave + emp.weddingLeave + emp.maternityLeave + emp.parentalLeave + emp.bereavementLeave + emp.other)}h</span></div>
           <div class="data-item"><span class="dl">扣薪假期</span> <span class="dv">${(emp.personalLeave + emp.sickLeave)}h</span></div>
           <div class="data-item"><span class="dl">假期明细</span> <span class="dv">${leaveItems}</span></div>
-          <div class="data-item"><span class="dl">申请单已通过</span> <span class="dv">${emp.approvedTotal.toFixed(1)}h</span></div>
+          <div class="data-item"><span class="dl">申请单(通过+审批中)</span> <span class="dv">${emp.effectiveTotal.toFixed(1)}h</span></div>
         </div>
         ${checksHtml}
         ${otDetailHtml}
