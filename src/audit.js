@@ -49,24 +49,25 @@ export function audit(employees, otRecords, dateRange) {
       detail: r2Pass ? '考勤表与申请单加班工时一致' : `差异 ${(emp.totalOT - effectiveTotal).toFixed(1)}h`,
     });
 
-    // 规则 3: 工作日加班分类一致性
-    const r3Pass = Math.abs(emp.workdayOT - effectiveWorkday) <= 0.1;
+    // 规则 3: 工作日加班分类一致性（普通工作日 + 周末）
+    const effectiveWorkdayAll = effectiveWorkday + effectiveWeekend;
+    const r3Pass = Math.abs(emp.workdayOT - effectiveWorkdayAll) <= 0.1;
     checks.push({
       type: '工作日加班分类一致性',
       passed: r3Pass,
       severity: r3Pass ? 'ok' : 'medium',
-      formula: `考勤表工作日加班 = ${emp.workdayOT}  |  申请单(普通工作日,已通过+审批中) = ${effectiveWorkday.toFixed(1)}`,
-      detail: r3Pass ? '工作日加班分类一致' : `差异 ${(emp.workdayOT - effectiveWorkday).toFixed(1)}h`,
+      formula: `考勤表工作日加班 = ${emp.workdayOT}  |  申请单(工作日${effectiveWorkday.toFixed(1)} + 周末${effectiveWeekend.toFixed(1)}) = ${effectiveWorkdayAll.toFixed(1)}`,
+      detail: r3Pass ? '工作日加班分类一致' : `差异 ${(emp.workdayOT - effectiveWorkdayAll).toFixed(1)}h`,
     });
 
-    // 规则 4: 节假日加班分类一致性
-    const r4Pass = Math.abs(emp.holidayOT - (effectiveHoliday + effectiveWeekend)) <= 0.1;
+    // 规则 4: 节假日加班分类一致性（仅法定节假日）
+    const r4Pass = Math.abs(emp.holidayOT - effectiveHoliday) <= 0.1;
     checks.push({
       type: '节假日加班分类一致性',
       passed: r4Pass,
       severity: r4Pass ? 'ok' : 'medium',
-      formula: `考勤表节假日加班 = ${emp.holidayOT}  |  申请单(周末${effectiveWeekend.toFixed(1)} + 法定${effectiveHoliday.toFixed(1)},已通过+审批中) = ${(effectiveHoliday + effectiveWeekend).toFixed(1)}`,
-      detail: r4Pass ? '节假日加班分类一致' : `差异 ${(emp.holidayOT - effectiveHoliday - effectiveWeekend).toFixed(1)}h，分类错误会影响加班费计算`,
+      formula: `考勤表节假日加班 = ${emp.holidayOT}  |  申请单(法定节假日,已通过+审批中) = ${effectiveHoliday.toFixed(1)}`,
+      detail: r4Pass ? '节假日加班分类一致' : `差异 ${(emp.holidayOT - effectiveHoliday).toFixed(1)}h，分类错误会影响加班费计算`,
     });
 
     // 规则 5: 带薪假期工时异常
