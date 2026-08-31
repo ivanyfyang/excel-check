@@ -62,25 +62,50 @@ export function render(results) {
         </li>`
       ).join('')}</ul>`;
 
+    const fmtMin = m => {
+      if (m == null) return '-';
+      const h = Math.floor(m / 60);
+      const mm = m % 60;
+      return `${h}:${String(mm).padStart(2, '0')}`;
+    };
     const fmtTimeRange = r => {
       if (!r.startTimeRaw && !r.endTimeRaw) return '-';
       const s = r.startTimeRaw.replace(/^\d{4}\/\d{1,2}\/\d{1,2}\s*/, '');
       const e = r.endTimeRaw.replace(/^\d{4}\/\d{1,2}\/\d{1,2}\s*/, '');
       return `${s}-${e}${r.crossMidnight ? '(次日)' : ''}`;
     };
-    const otApprovedRows = emp.otApproved.map(r =>
-      `<tr><td>${fmtDate(r.date)}</td><td>${r.dayType}</td><td>${fmtTimeRange(r)}</td><td>${r.hours}h</td><td class="ot-status-pass">${r.status}</td></tr>`
-    ).join('');
-    const otPendingRows = emp.otPending.map(r =>
-      `<tr><td>${fmtDate(r.date)}</td><td>${r.dayType}</td><td>${fmtTimeRange(r)}</td><td>${r.hours}h</td><td class="ot-status-pending">${r.status}</td></tr>`
-    ).join('');
-    const otRejectedRows = emp.otRejected.map(r =>
-      `<tr><td>${fmtDate(r.date)}</td><td>${r.dayType}</td><td>${fmtTimeRange(r)}</td><td>${r.hours}h</td><td class="ot-status-reject">${r.status}</td></tr>`
-    ).join('');
-    const allOTRows = otApprovedRows + otPendingRows + otRejectedRows;
+    const findDayIdx = (d) => {
+      if (!d || !emp.dateHeaders) return -1;
+      for (let i = 0; i < emp.dateHeaders.length; i++) {
+        const dh = emp.dateHeaders[i];
+        if (dh && dh.getFullYear() === d.getFullYear() && dh.getMonth() === d.getMonth() && dh.getDate() === d.getDate()) return i;
+      }
+      return -1;
+    };
+    const attInfo = (r) => {
+      const idx = findDayIdx(r.date);
+      if (idx === -1) return { shift: '-', clock: '-', hours: '-' };
+      const shift = emp.shifts[idx] || '-';
+      const ci = emp.clockIn[idx];
+      const co = emp.clockOut[idx];
+      const clock = (ci != null || co != null) ? `${fmtMin(ci)}-${fmtMin(co)}` : '无记录';
+      const hours = emp.dailyHours[idx] > 0 ? `${emp.dailyHours[idx]}h` : '-';
+      return { shift, clock, hours };
+    };
+    const statusCls = r => {
+      if (r.status === '已通过') return 'ot-status-pass';
+      if (r.status === '审批中') return 'ot-status-pending';
+      return 'ot-status-reject';
+    };
+    const otRow = r => {
+      const a = attInfo(r);
+      return `<tr><td>${fmtDate(r.date)}</td><td>${r.dayType}</td><td>${fmtTimeRange(r)}</td><td>${r.hours}h</td><td class="${statusCls(r)}">${r.status}</td><td>${a.shift}</td><td>${a.clock}</td><td>${a.hours}</td></tr>`;
+    };
+    const allOTRecords = [...emp.otApproved, ...emp.otPending, ...emp.otRejected];
+    const allOTRows = allOTRecords.map(otRow).join('');
     const otDetailHtml = allOTRows
-      ? `<details class="ot-detail"><summary>查看加班申请明细 (${emp.otApproved.length + emp.otPending.length + emp.otRejected.length} 条)</summary>
-          <table class="ot-table"><thead><tr><th>日期</th><th>类型</th><th>时段</th><th>时长</th><th>状态</th></tr></thead><tbody>${allOTRows}</tbody></table></details>`
+      ? `<details class="ot-detail"><summary>查看加班申请明细 (${allOTRecords.length} 条)</summary>
+          <table class="ot-table"><thead><tr><th>日期</th><th>类型</th><th>加班时段</th><th>时长</th><th>状态</th><th>班次</th><th>打卡</th><th>出勤</th></tr></thead><tbody>${allOTRows}</tbody></table></details>`
       : '<p style="font-size:12px;color:var(--text2);margin-top:8px;">无本期加班申请记录</p>';
 
     return `
