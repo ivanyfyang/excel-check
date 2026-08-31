@@ -30,9 +30,21 @@
     <button class="btn" id="auditBtn">开始审核</button>
   </div>
 
-  <details class="rules-panel" id="rulesPanel">
-    <summary class="rules-toggle">检测规则说明</summary>
-    <div class="rules-body">
+  <div id="error-msg"></div>
+
+  <button class="rules-fab" id="rulesFab" title="检测规则说明">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+  </button>
+
+  <div class="rules-overlay" id="rulesOverlay"></div>
+  <aside class="rules-drawer" id="rulesDrawer">
+    <div class="drawer-header">
+      <span class="drawer-title">检测规则说明</span>
+      <button class="drawer-close" id="drawerClose">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="drawer-body">
       <div class="rule-card">
         <div class="rule-head">
           <span class="rule-num">1</span>
@@ -108,9 +120,7 @@
         </ul>
       </div>
     </div>
-  </details>
-
-  <div id="error-msg"></div>
+  </aside>
 
   <div class="results" id="results">
     <div class="stats" id="stats"></div>

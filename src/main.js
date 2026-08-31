@@ -66,3 +66,13 @@ function showError(msg) {
 function hideError() {
   $('#error-msg').style.display = 'none';
 }
+
+const drawer = $('#rulesDrawer');
+const overlay = $('#rulesOverlay');
+
+function openDrawer() { drawer.classList.add('open'); overlay.classList.add('open'); }
+function closeDrawer() { drawer.classList.remove('open'); overlay.classList.remove('open'); }
+
+$('#rulesFab').addEventListener('click', openDrawer);
+$('#drawerClose').addEventListener('click', closeDrawer);
+overlay.addEventListener('click', closeDrawer);
