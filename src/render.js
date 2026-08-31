@@ -98,8 +98,17 @@ export function render(results) {
       const problems = [];
       if (r.startMinutes != null && r.startMinutes < a.ci - 10)
         problems.push(`开始${fmtMin(r.startMinutes)}早于打卡${fmtMin(a.ci)}`);
-      if (r.endMinutes != null && !r.crossMidnight && r.endMinutes > a.co + 10)
-        problems.push(`结束${fmtMin(r.endMinutes)}晚于打卡${fmtMin(a.co)}`);
+      if (r.endMinutes != null) {
+        if (r.crossMidnight) {
+          if (a.co < a.ci && a.co < r.endMinutes - 10) {
+            problems.push(`打卡${fmtMin(a.co)}早于加班结束次日${fmtMin(r.endMinutes)}`);
+          } else if (a.co >= a.ci && a.co <= r.startMinutes + 10) {
+            problems.push(`打卡${fmtMin(a.co)}未覆盖跨日加班至次日${fmtMin(r.endMinutes)}`);
+          }
+        } else if (r.endMinutes > a.co + 10) {
+          problems.push(`结束${fmtMin(r.endMinutes)}晚于打卡${fmtMin(a.co)}`);
+        }
+      }
       return problems.join('；');
     };
     const statusCls = r => {

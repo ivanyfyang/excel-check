@@ -144,8 +144,16 @@ export function audit(employees, otRecords, dateRange) {
         if (ot.startMinutes != null && ot.startMinutes < ciMin - 10) {
           problems.push(`开始${fmtMin(ot.startMinutes)}早于打卡${fmtMin(ciMin)}`);
         }
-        if (ot.endMinutes != null && !ot.crossMidnight && ot.endMinutes > coMin + 10) {
-          problems.push(`结束${fmtMin(ot.endMinutes)}晚于打卡${fmtMin(coMin)}`);
+        if (ot.endMinutes != null) {
+          if (ot.crossMidnight) {
+            if (coMin < ciMin && coMin < ot.endMinutes - 10) {
+              problems.push(`打卡${fmtMin(coMin)}早于加班结束次日${fmtMin(ot.endMinutes)}`);
+            } else if (coMin >= ciMin && coMin <= ot.startMinutes + 10) {
+              problems.push(`打卡${fmtMin(coMin)}未覆盖跨日加班至次日${fmtMin(ot.endMinutes)}`);
+            }
+          } else if (ot.endMinutes > coMin + 10) {
+            problems.push(`结束${fmtMin(ot.endMinutes)}晚于打卡${fmtMin(coMin)}`);
+          }
         }
         if (ot.startMinutes != null && ot.endMinutes != null) {
           const spanMinutes = ot.crossMidnight
