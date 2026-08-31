@@ -43,7 +43,7 @@ export function audit(employees, otRecords, dateRange) {
     checks.push({
       type: '加班总时长一致性',
       passed: r2Pass,
-      severity: r2Pass ? 'ok' : (emp.totalOT > 0 && effectiveTotal === 0 ? 'high' : 'medium'),
+      severity: r2Pass ? 'ok' : 'high',
       formula: `考勤表加班 = 节假日${emp.holidayOT} + 工作日${emp.workdayOT} = ${emp.totalOT.toFixed(1)}` +
         `  |  申请单(已通过+审批中) = ${effectiveTotal.toFixed(1)}${pendingNote}`,
       detail: r2Pass ? '考勤表与申请单加班工时一致' : `差异 ${(emp.totalOT - effectiveTotal).toFixed(1)}h`,
@@ -60,14 +60,14 @@ export function audit(employees, otRecords, dateRange) {
       detail: r3Pass ? '工作日加班分类一致' : `差异 ${(emp.workdayOT - effectiveWorkdayAll).toFixed(1)}h`,
     });
 
-    // 规则 4: 节假日加班分类一致性（仅法定节假日）
+    // 规则 4: 法定节假日加班分类一致性（仅法定节假日）
     const r4Pass = Math.abs(emp.holidayOT - effectiveHoliday) <= 0.1;
     checks.push({
-      type: '节假日加班分类一致性',
+      type: '法定节假日加班分类一致性',
       passed: r4Pass,
       severity: r4Pass ? 'ok' : 'medium',
-      formula: `考勤表节假日加班 = ${emp.holidayOT}  |  申请单(法定节假日,已通过+审批中) = ${effectiveHoliday.toFixed(1)}`,
-      detail: r4Pass ? '节假日加班分类一致' : `差异 ${(emp.holidayOT - effectiveHoliday).toFixed(1)}h，分类错误会影响加班费计算`,
+      formula: `考勤表法定节假日加班 = ${emp.holidayOT}  |  申请单(法定节假日,已通过+审批中) = ${effectiveHoliday.toFixed(1)}`,
+      detail: r4Pass ? '法定节假日加班分类一致' : `差异 ${(emp.holidayOT - effectiveHoliday).toFixed(1)}h，分类错误会影响加班费计算`,
     });
 
     // 规则 5: 带薪假期工时异常
