@@ -96,18 +96,7 @@ export function audit(employees, otRecords, dateRange) {
       });
     }
 
-    // 规则 6: 未审批加班提醒
-    if (pending.length > 0) {
-      checks.push({
-        type: '未审批加班提醒',
-        passed: false,
-        severity: 'medium',
-        formula: `审批中 ${pending.length} 条，共 ${pendingTotal.toFixed(1)}h（已计入工时对比）`,
-        detail: '需及时审批以确保数据完整',
-      });
-    }
-
-    // 规则 7: 加班打卡记录核验
+    // 规则 6: 加班打卡记录核验
     if (effective.length > 0 && emp.dateHeaders) {
       const mismatchDetails = [];
       for (const ot of effective) {
