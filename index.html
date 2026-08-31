@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>考勤审核工具</title>
+</head>
+<body>
+<div class="container">
+  <h1>考勤审核工具</h1>
+  <p class="subtitle">上传考勤表和加班申请单，自动检测数据问题</p>
+
+  <div class="upload-area">
+    <div class="upload-group">
+      <label>考勤表</label>
+      <div class="hint">支持 .xlsx 格式，包含多个月份 sheet</div>
+      <input type="file" id="attFile" accept=".xlsx,.xls">
+    </div>
+    <div class="upload-group">
+      <label>加班申请单</label>
+      <div class="hint">支持 .xlsx 格式，包含加班申请明细</div>
+      <input type="file" id="otFile" accept=".xlsx,.xls">
+    </div>
+    <button class="btn" id="parseBtn" disabled>加载文件</button>
+  </div>
+
+  <div class="sheet-select" id="sheetSelect">
+    <label>选择考勤周期 Sheet：</label>
+    <select id="sheetDropdown"></select>
+    <button class="btn" id="auditBtn">开始审核</button>
+  </div>
+
+  <div id="error-msg"></div>
+
+  <div class="results" id="results">
+    <div class="stats" id="stats"></div>
+    <div id="issueCards"></div>
+  </div>
+</div>
+
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
